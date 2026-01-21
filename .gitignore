@@ -1,0 +1,21 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Excel files (data)
+*.xlsx
+*.xls
+
+# Generated outputs
+output/
+*.png
+*.svg
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Virtual Environment
+venv/
+env/
+.env
