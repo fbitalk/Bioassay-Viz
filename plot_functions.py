@@ -297,3 +297,102 @@ def draw_fungicide_bar(df):
     
     plt.tight_layout()
     return fig
+
+# ==============================
+# 4. 统计箱线图功能
+# ==============================
+def draw_boxplot(df):
+    """
+    绘制数据分布箱线图
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 尝试将第一列设为索引（通常是编号），剩下的作为数值列
+    if df.columns[0] not in df.select_dtypes(include=[np.number]).columns:
+        df = df.set_index(df.columns[0])
+    
+    # 只保留数值列
+    numeric_df = df.select_dtypes(include=[np.number])
+    
+    if numeric_df.empty:
+        raise ValueError("未找到有效的数值列用于绘制箱线图")
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # 绘图
+    sns.boxplot(data=numeric_df, ax=ax, palette="Set3", width=0.5)
+    sns.stripplot(data=numeric_df, ax=ax, color=".25", size=4, alpha=0.6, jitter=True)
+    
+    # 设置字体
+    ax.set_title('各指标活性数据分布', fontproperties=global_font, fontsize=18, pad=20)
+    ax.set_ylabel('活性数值', fontproperties=global_font, fontsize=14)
+    ax.set_xlabel('测试指标', fontproperties=global_font, fontsize=14)
+    
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right', fontproperties=global_font, fontsize=12)
+    
+    # 移除上右边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    
+    plt.tight_layout()
+    return fig
+
+# ==============================
+# 5. 广谱雷达图功能
+# ==============================
+def draw_radar_chart(df):
+    """
+    绘制多维雷达图（适合展示广谱性）
+    默认只取前5行数据进行展示，避免过于混乱
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 数据预处理：第一列为名称
+    names = df.iloc[:, 0].astype(str).values
+    data_df = df.iloc[:, 1:].select_dtypes(include=[np.number])
+    
+    if data_df.empty:
+        raise ValueError("未找到数值数据列")
+        
+    categories = list(data_df.columns)
+    N = len(categories)
+    
+    # 限制展示数量，防止图表混乱
+    max_show = 6
+    if len(df) > max_show:
+        names = names[:max_show]
+        data_df = data_df.iloc[:max_show]
+        print(f"Warning: 只展示前 {max_show} 条数据的雷达图")
+
+    # 角度设置
+    angles = [n / float(N) * 2 * np.pi for n in range(N)]
+    angles += angles[:1]  # 闭合
+    
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
+    
+    # 颜色库
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
+    
+    for i, (name, row) in enumerate(zip(names, data_df.values)):
+        values = row.flatten().tolist()
+        values += values[:1]  # 闭合
+        
+        color = colors[i % len(colors)]
+        ax.plot(angles, values, linewidth=2, linestyle='solid', label=name, color=color)
+        ax.fill(angles, values, color=color, alpha=0.1)
+
+    # 设置各种标签
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(categories, fontproperties=global_font, fontsize=14)
+    
+    # 设置Y轴标签（不显示具体刻度值，避免重叠，或者只显示几个）
+    ax.yaxis.set_tick_params(labelsize=10)
+    plt.yticks(fontproperties=global_font)
+    
+    # 标题和图例
+    ax.set_title("多靶标广谱活性评价", fontproperties=global_font, fontsize=20, pad=30)
+    ax.legend(loc='upper right', bbox_to_anchor=(0.1, 1.1), prop=global_font, frameon=False)
+    
+    plt.tight_layout()
+    return fig
