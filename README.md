@@ -11,22 +11,32 @@
     *   支持自定义排序（罗马数字、生测编号）。
     *   支持数据分割（Split Point），可将长图表拆分为多张。
     *   自动将小数转换为百分数。
+    
+    ![Heatmap Demo](assets/demo_heatmap.png)
 
 2.  **🌿 除草活性极坐标图 (Polar Bar)**
     *   生成美观的极坐标柱状图，展示不同作物对样品的敏感度。
     *   自动适配作物数量。
+    
+    ![Polar Bar Demo](assets/demo_polar.png)
 
 3.  **🍄 除菌活性柱状图 (Bar Chart)**
     *   自动识别“灰霉”和“赤霉”数据。
     *   生成对比分组柱状图，包含学术风格的配色和布局。
+    
+    ![Bar Chart Demo](assets/demo_bar.png)
 
 4.  **📦 数据分布箱线图 (Boxplot)**
     *   **新功能**：统计各指标（作物/菌种）的活性分布情况。
     *   展示最大值、最小值、中位数及异常值，快速评估数据质量。
+    
+    ![Boxplot Demo](assets/demo_boxplot.png)
 
 5.  **🕸️ 广谱活性雷达图 (Radar Chart)**
     *   **新功能**：多维度展示化合物的广谱活性。
     *   直观对比单一化合物对多个靶标的综合效果。
+    
+    ![Radar Chart Demo](assets/demo_radar.png)
 
 ## 🚀 快速开始
 
