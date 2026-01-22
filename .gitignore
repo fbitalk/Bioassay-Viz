@@ -11,6 +11,9 @@ output/
 *.png
 *.svg
 
+# Allow assets for README
+!assets/*.png
+
 # System files
 .DS_Store
 Thumbs.db
