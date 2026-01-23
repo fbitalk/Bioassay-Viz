@@ -15,7 +15,7 @@ st.markdown("上传 Excel 文件，自动生成热图、柱状图。")
 # 侧边栏：功能选择
 mode = st.sidebar.selectbox(
     "选择功能模块",
-    ("热图生成 (Heatmap)", "除草活性柱图 (Polar Bar)", "除菌活性柱图 (Bar Chart)", "数据分布箱线图 (Boxplot)", "广谱活性雷达图 (Radar Chart)")
+    ("热图生成 (Heatmap)", "除草活性柱图 (Polar Bar)", "除菌活性柱图 (Bar Chart)", "数据分布箱线图 (Boxplot)", "广谱活性雷达图 (Radar Chart)", "反应条件筛选气泡图 (Optimization Bubble)", "反应能级图 (Energy Profile)")
 )
 
 # 通用文件上传
@@ -212,6 +212,77 @@ if uploaded_file is not None:
                     except Exception as e:
                         st.error(f"绘图失败: {e}")
 
+        # ==========================================
+        # 模式 6: 反应条件筛选气泡图
+        # ==========================================
+        elif mode == "反应条件筛选气泡图 (Optimization Bubble)":
+            st.header("⚗️ 反应条件筛选气泡图")
+            st.info("说明：请确保数据至少包含 4 列，顺序建议为：[催化剂, 溶剂, 产率, ee值]。")
+            st.info("图表说明：X轴=第1列, Y轴=第2列, 气泡大小=第3列(产率), 气泡颜色=第4列(ee)")
+            
+            if st.button("生成气泡图"):
+                with st.spinner("正在绘制..."):
+                    try:
+                        fig = pf.draw_optimization_bubble(df.copy())
+                        st.pyplot(fig)
+                        
+                        # 确保输出目录存在
+                        output_dir = "output"
+                        if not os.path.exists(output_dir):
+                            os.makedirs(output_dir)
+
+                        # 保存到本地
+                        local_path = os.path.join(output_dir, f"bubble_opt_{selected_sheet}.png")
+                        fig.savefig(local_path, format="png", dpi=300, bbox_inches='tight')
+                        st.success(f"图片已保存至: {local_path}")
+
+                        buf = BytesIO()
+                        fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+                        st.download_button(
+                            label="下载图表 (PNG)",
+                            data=buf.getvalue(),
+                            file_name=f"bubble_opt_{selected_sheet}.png",
+                            mime="image/png"
+                        )
+                    except Exception as e:
+                        st.error(f"绘图失败: {e}")
+                        st.exception(e)
+
+        # ==========================================
+        # 模式 7: 反应能级图
+        # ==========================================
+        elif mode == "反应能级图 (Energy Profile)":
+            st.header("📈 反应能级图 (Reaction Profile)")
+            st.info("说明：第一列为步骤名称(Reactant, TS, etc.)，后续列为各路径的相对能量值(kcal/mol)。")
+            
+            if st.button("生成能级图"):
+                with st.spinner("正在绘制..."):
+                    try:
+                        fig = pf.draw_energy_profile(df.copy())
+                        st.pyplot(fig)
+                        
+                        # 确保输出目录存在
+                        output_dir = "output"
+                        if not os.path.exists(output_dir):
+                            os.makedirs(output_dir)
+
+                        # 保存到本地
+                        local_path = os.path.join(output_dir, f"energy_profile_{selected_sheet}.png")
+                        fig.savefig(local_path, format="png", dpi=300, bbox_inches='tight')
+                        st.success(f"图片已保存至: {local_path}")
+
+                        buf = BytesIO()
+                        fig.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+                        st.download_button(
+                            label="下载图表 (PNG)",
+                            data=buf.getvalue(),
+                            file_name=f"energy_profile_{selected_sheet}.png",
+                            mime="image/png"
+                        )
+                    except Exception as e:
+                        st.error(f"绘图失败: {e}")
+                        st.exception(e)
+
     except Exception as e:
         st.error(f"无法读取文件: {e}")
 else:
@@ -225,4 +296,6 @@ else:
     - **除菌**: 需包含 '生测编号', '灰霉', '赤霉' 列。
     - **箱线图**: 第一列为编号，其余为数值列。
     - **雷达图**: 第一列为编号，其余为各维度指标。
+    - **气泡图**: 需4列数据：[变量A, 变量B, 大小(产率), 颜色(ee)]。
+    - **能级图**: 第一列为步骤，后续为能量数值。
     """)

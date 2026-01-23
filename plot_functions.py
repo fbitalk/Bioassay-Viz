@@ -245,6 +245,180 @@ def draw_polar_bar(df):
     return fig
 
 # ==============================
+# 6. 反应条件筛选气泡图
+# ==============================
+def draw_optimization_bubble(df):
+    """
+    绘制反应条件筛选气泡图
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 4:
+        raise ValueError("数据列数不足，至少需要 4 列 (Catalyst, Solvent, Yield, ee)")
+
+    # 提取数据 (假设前4列顺序固定: Cat, Solv, Yield, ee)
+    # 或者通过列名模糊匹配
+    col_names = df.columns
+    x_col = col_names[0]
+    y_col = col_names[1]
+    size_col = col_names[2]
+    color_col = col_names[3]
+    
+    x_cat = df[x_col].astype(str)
+    y_solv = df[y_col].astype(str)
+    sizes = pd.to_numeric(df[size_col], errors='coerce').fillna(0)
+    colors = pd.to_numeric(df[color_col], errors='coerce').fillna(0)
+    
+    # 将分类变量映射为数值坐标
+    unique_x = sorted(list(set(x_cat)))
+    unique_y = sorted(list(set(y_solv)))
+    
+    x_map = {val: i for i, val in enumerate(unique_x)}
+    y_map = {val: i for i, val in enumerate(unique_y)}
+    
+    x_vals = x_cat.map(x_map)
+    y_vals = y_solv.map(y_map)
+
+    # 创建画布
+    fig, ax = plt.subplots(figsize=(11, 9))
+    
+    # 核心绘图
+    sc = ax.scatter(x_vals, y_vals, s=sizes*12, c=colors, 
+                    cmap='viridis', alpha=0.8, edgecolors='black', linewidth=1)
+    
+    # 标签与美化
+    ax.set_xticks(range(len(unique_x)))
+    ax.set_xticklabels(unique_x, fontsize=12, rotation=0, fontproperties=global_font)
+    
+    ax.set_yticks(range(len(unique_y)))
+    ax.set_yticklabels(unique_y, fontsize=12, fontproperties=global_font)
+    
+    ax.grid(True, linestyle='--', alpha=0.3)
+    ax.set_axisbelow(True)
+    
+    # 轴标签
+    ax.set_xlabel(x_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_ylabel(y_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_title('反应条件筛选结果 (Reaction Optimization)', fontsize=18, pad=20, fontproperties=global_font)
+    
+    # Colorbar
+    cbar = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label(f'{color_col} (Color)', rotation=270, labelpad=20, fontsize=12, fontproperties=global_font)
+    
+    # Size Legend
+    legend_sizes = [20, 50, 80]
+    legend_labels = ['20%', '50%', '80%']
+    legend_handles = [plt.scatter([], [], s=s*12, c='gray', alpha=0.6, edgecolors='black') for s in legend_sizes]
+    
+    ax.legend(legend_handles, legend_labels, title=f"{size_col} (Size)", 
+              loc='upper left', bbox_to_anchor=(1.15, 1), frameon=False, labelspacing=1.5, prop=global_font)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.85)
+    
+    return fig
+
+# ==============================
+# 7. 反应能级图
+# ==============================
+def draw_energy_profile(df):
+    """
+    绘制反应能级图 (Reaction Energy Profile)
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 2:
+        raise ValueError("数据列数不足，至少需要 2 列 (Step, Energy...)")
+    
+    # 提取步骤名称
+    steps = df.iloc[:, 0].astype(str).values
+    n_steps = len(steps)
+    
+    # 提取所有路径的数据列（除去第一列）
+    # 只选择数值类型的列作为能量列
+    path_cols = df.iloc[:, 1:].select_dtypes(include=[np.number]).columns
+    
+    if len(path_cols) == 0:
+        raise ValueError("未找到数值列作为能量数据")
+        
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # 定义颜色
+    colors = ['#d62728', '#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b']
+    
+    # 绘图参数
+    level_width = 0.6  # 能级横线的宽度
+    gap = 0.4          # 步骤之间的间距
+    
+    # 遍历每条路径
+    for idx, col in enumerate(path_cols):
+        energies = df[col].values
+        color = colors[idx % len(colors)]
+        label = str(col).replace('_Energy', '').replace('_', ' ')
+        
+        # 记录连接线的坐标点
+        connector_x = []
+        connector_y = []
+        
+        for i, E in enumerate(energies):
+            # 处理 NaN 值，如果中间断开则不连线
+            if np.isnan(E): 
+                connector_x.append(None)
+                connector_y.append(None)
+                continue
+                
+            # 计算当前步骤的中心 X 坐标
+            center_x = i * (level_width + gap)
+            
+            # 绘制能级水平线
+            x_start = center_x - level_width / 2
+            x_end = center_x + level_width / 2
+            ax.plot([x_start, x_end], [E, E], color=color, linewidth=2.5, label=label if i == 0 else "")
+            
+            connector_x.append(center_x)
+            connector_y.append(E)
+            
+            # 标注数值
+            ax.text(center_x, E + (1.0 if E >= 0 else -1.5), f"{E:.1f}", ha='center', va='bottom', 
+                    fontsize=10, color=color, fontweight='bold', fontproperties=global_font)
+
+        # 平滑曲线连接
+        for i in range(len(connector_x) - 1):
+            if connector_x[i] is None or connector_x[i+1] is None:
+                continue
+                
+            x1 = connector_x[i] + level_width / 2
+            y1 = connector_y[i]
+            x2 = connector_x[i+1] - level_width / 2
+            y2 = connector_y[i+1]
+            
+            # 生成平滑曲线点 (余弦插值)
+            t = np.linspace(0, 1, 50)
+            x_smooth = x1 + (x2 - x1) * t
+            y_smooth = y1 + (y2 - y1) * (1 - np.cos(t * np.pi)) / 2
+            
+            ax.plot(x_smooth, y_smooth, color=color, linestyle='--', linewidth=1.2, alpha=0.6)
+            
+    # 设置 X 轴
+    ax.set_xticks([i * (level_width + gap) for i in range(n_steps)])
+    ax.set_xticklabels(steps, fontsize=12, fontweight='semibold', fontproperties=global_font)
+    
+    # 设置 Y 轴
+    ax.set_ylabel('相对吉布斯自由能 (kcal/mol)', fontsize=12, fontproperties=global_font)
+    
+    # 移除多余边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.legend(frameon=False, loc='best', prop=global_font)
+    ax.set_title('反应能级图 (Reaction Energy Profile)', fontsize=16, pad=15, fontproperties=global_font)
+    
+    plt.tight_layout()
+    return fig
+
+# ==============================
 # 3. 除菌柱图功能
 # ==============================
 def draw_fungicide_bar(df):
@@ -299,6 +473,180 @@ def draw_fungicide_bar(df):
     return fig
 
 # ==============================
+# 6. 反应条件筛选气泡图
+# ==============================
+def draw_optimization_bubble(df):
+    """
+    绘制反应条件筛选气泡图
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 4:
+        raise ValueError("数据列数不足，至少需要 4 列 (Catalyst, Solvent, Yield, ee)")
+
+    # 提取数据 (假设前4列顺序固定: Cat, Solv, Yield, ee)
+    # 或者通过列名模糊匹配
+    col_names = df.columns
+    x_col = col_names[0]
+    y_col = col_names[1]
+    size_col = col_names[2]
+    color_col = col_names[3]
+    
+    x_cat = df[x_col].astype(str)
+    y_solv = df[y_col].astype(str)
+    sizes = pd.to_numeric(df[size_col], errors='coerce').fillna(0)
+    colors = pd.to_numeric(df[color_col], errors='coerce').fillna(0)
+    
+    # 将分类变量映射为数值坐标
+    unique_x = sorted(list(set(x_cat)))
+    unique_y = sorted(list(set(y_solv)))
+    
+    x_map = {val: i for i, val in enumerate(unique_x)}
+    y_map = {val: i for i, val in enumerate(unique_y)}
+    
+    x_vals = x_cat.map(x_map)
+    y_vals = y_solv.map(y_map)
+
+    # 创建画布
+    fig, ax = plt.subplots(figsize=(11, 9))
+    
+    # 核心绘图
+    sc = ax.scatter(x_vals, y_vals, s=sizes*12, c=colors, 
+                    cmap='viridis', alpha=0.8, edgecolors='black', linewidth=1)
+    
+    # 标签与美化
+    ax.set_xticks(range(len(unique_x)))
+    ax.set_xticklabels(unique_x, fontsize=12, rotation=0, fontproperties=global_font)
+    
+    ax.set_yticks(range(len(unique_y)))
+    ax.set_yticklabels(unique_y, fontsize=12, fontproperties=global_font)
+    
+    ax.grid(True, linestyle='--', alpha=0.3)
+    ax.set_axisbelow(True)
+    
+    # 轴标签
+    ax.set_xlabel(x_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_ylabel(y_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_title('反应条件筛选结果 (Reaction Optimization)', fontsize=18, pad=20, fontproperties=global_font)
+    
+    # Colorbar
+    cbar = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label(f'{color_col} (Color)', rotation=270, labelpad=20, fontsize=12, fontproperties=global_font)
+    
+    # Size Legend
+    legend_sizes = [20, 50, 80]
+    legend_labels = ['20%', '50%', '80%']
+    legend_handles = [plt.scatter([], [], s=s*12, c='gray', alpha=0.6, edgecolors='black') for s in legend_sizes]
+    
+    ax.legend(legend_handles, legend_labels, title=f"{size_col} (Size)", 
+              loc='upper left', bbox_to_anchor=(1.15, 1), frameon=False, labelspacing=1.5, prop=global_font)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.85)
+    
+    return fig
+
+# ==============================
+# 7. 反应能级图
+# ==============================
+def draw_energy_profile(df):
+    """
+    绘制反应能级图 (Reaction Energy Profile)
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 2:
+        raise ValueError("数据列数不足，至少需要 2 列 (Step, Energy...)")
+    
+    # 提取步骤名称
+    steps = df.iloc[:, 0].astype(str).values
+    n_steps = len(steps)
+    
+    # 提取所有路径的数据列（除去第一列）
+    # 只选择数值类型的列作为能量列
+    path_cols = df.iloc[:, 1:].select_dtypes(include=[np.number]).columns
+    
+    if len(path_cols) == 0:
+        raise ValueError("未找到数值列作为能量数据")
+        
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # 定义颜色
+    colors = ['#d62728', '#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b']
+    
+    # 绘图参数
+    level_width = 0.6  # 能级横线的宽度
+    gap = 0.4          # 步骤之间的间距
+    
+    # 遍历每条路径
+    for idx, col in enumerate(path_cols):
+        energies = df[col].values
+        color = colors[idx % len(colors)]
+        label = str(col).replace('_Energy', '').replace('_', ' ')
+        
+        # 记录连接线的坐标点
+        connector_x = []
+        connector_y = []
+        
+        for i, E in enumerate(energies):
+            # 处理 NaN 值，如果中间断开则不连线
+            if np.isnan(E): 
+                connector_x.append(None)
+                connector_y.append(None)
+                continue
+                
+            # 计算当前步骤的中心 X 坐标
+            center_x = i * (level_width + gap)
+            
+            # 绘制能级水平线
+            x_start = center_x - level_width / 2
+            x_end = center_x + level_width / 2
+            ax.plot([x_start, x_end], [E, E], color=color, linewidth=2.5, label=label if i == 0 else "")
+            
+            connector_x.append(center_x)
+            connector_y.append(E)
+            
+            # 标注数值
+            ax.text(center_x, E + (1.0 if E >= 0 else -1.5), f"{E:.1f}", ha='center', va='bottom', 
+                    fontsize=10, color=color, fontweight='bold', fontproperties=global_font)
+
+        # 平滑曲线连接
+        for i in range(len(connector_x) - 1):
+            if connector_x[i] is None or connector_x[i+1] is None:
+                continue
+                
+            x1 = connector_x[i] + level_width / 2
+            y1 = connector_y[i]
+            x2 = connector_x[i+1] - level_width / 2
+            y2 = connector_y[i+1]
+            
+            # 生成平滑曲线点 (余弦插值)
+            t = np.linspace(0, 1, 50)
+            x_smooth = x1 + (x2 - x1) * t
+            y_smooth = y1 + (y2 - y1) * (1 - np.cos(t * np.pi)) / 2
+            
+            ax.plot(x_smooth, y_smooth, color=color, linestyle='--', linewidth=1.2, alpha=0.6)
+            
+    # 设置 X 轴
+    ax.set_xticks([i * (level_width + gap) for i in range(n_steps)])
+    ax.set_xticklabels(steps, fontsize=12, fontweight='semibold', fontproperties=global_font)
+    
+    # 设置 Y 轴
+    ax.set_ylabel('相对吉布斯自由能 (kcal/mol)', fontsize=12, fontproperties=global_font)
+    
+    # 移除多余边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.legend(frameon=False, loc='best', prop=global_font)
+    ax.set_title('反应能级图 (Reaction Energy Profile)', fontsize=16, pad=15, fontproperties=global_font)
+    
+    plt.tight_layout()
+    return fig
+
+# ==============================
 # 4. 统计箱线图功能
 # ==============================
 def draw_boxplot(df):
@@ -334,6 +682,180 @@ def draw_boxplot(df):
     ax.spines['top'].set_visible(False)
     ax.spines['right'].set_visible(False)
     ax.grid(axis='y', linestyle='--', alpha=0.5)
+    
+    plt.tight_layout()
+    return fig
+
+# ==============================
+# 6. 反应条件筛选气泡图
+# ==============================
+def draw_optimization_bubble(df):
+    """
+    绘制反应条件筛选气泡图
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 4:
+        raise ValueError("数据列数不足，至少需要 4 列 (Catalyst, Solvent, Yield, ee)")
+
+    # 提取数据 (假设前4列顺序固定: Cat, Solv, Yield, ee)
+    # 或者通过列名模糊匹配
+    col_names = df.columns
+    x_col = col_names[0]
+    y_col = col_names[1]
+    size_col = col_names[2]
+    color_col = col_names[3]
+    
+    x_cat = df[x_col].astype(str)
+    y_solv = df[y_col].astype(str)
+    sizes = pd.to_numeric(df[size_col], errors='coerce').fillna(0)
+    colors = pd.to_numeric(df[color_col], errors='coerce').fillna(0)
+    
+    # 将分类变量映射为数值坐标
+    unique_x = sorted(list(set(x_cat)))
+    unique_y = sorted(list(set(y_solv)))
+    
+    x_map = {val: i for i, val in enumerate(unique_x)}
+    y_map = {val: i for i, val in enumerate(unique_y)}
+    
+    x_vals = x_cat.map(x_map)
+    y_vals = y_solv.map(y_map)
+
+    # 创建画布
+    fig, ax = plt.subplots(figsize=(11, 9))
+    
+    # 核心绘图
+    sc = ax.scatter(x_vals, y_vals, s=sizes*12, c=colors, 
+                    cmap='viridis', alpha=0.8, edgecolors='black', linewidth=1)
+    
+    # 标签与美化
+    ax.set_xticks(range(len(unique_x)))
+    ax.set_xticklabels(unique_x, fontsize=12, rotation=0, fontproperties=global_font)
+    
+    ax.set_yticks(range(len(unique_y)))
+    ax.set_yticklabels(unique_y, fontsize=12, fontproperties=global_font)
+    
+    ax.grid(True, linestyle='--', alpha=0.3)
+    ax.set_axisbelow(True)
+    
+    # 轴标签
+    ax.set_xlabel(x_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_ylabel(y_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_title('反应条件筛选结果 (Reaction Optimization)', fontsize=18, pad=20, fontproperties=global_font)
+    
+    # Colorbar
+    cbar = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label(f'{color_col} (Color)', rotation=270, labelpad=20, fontsize=12, fontproperties=global_font)
+    
+    # Size Legend
+    legend_sizes = [20, 50, 80]
+    legend_labels = ['20%', '50%', '80%']
+    legend_handles = [plt.scatter([], [], s=s*12, c='gray', alpha=0.6, edgecolors='black') for s in legend_sizes]
+    
+    ax.legend(legend_handles, legend_labels, title=f"{size_col} (Size)", 
+              loc='upper left', bbox_to_anchor=(1.15, 1), frameon=False, labelspacing=1.5, prop=global_font)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.85)
+    
+    return fig
+
+# ==============================
+# 7. 反应能级图
+# ==============================
+def draw_energy_profile(df):
+    """
+    绘制反应能级图 (Reaction Energy Profile)
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 2:
+        raise ValueError("数据列数不足，至少需要 2 列 (Step, Energy...)")
+    
+    # 提取步骤名称
+    steps = df.iloc[:, 0].astype(str).values
+    n_steps = len(steps)
+    
+    # 提取所有路径的数据列（除去第一列）
+    # 只选择数值类型的列作为能量列
+    path_cols = df.iloc[:, 1:].select_dtypes(include=[np.number]).columns
+    
+    if len(path_cols) == 0:
+        raise ValueError("未找到数值列作为能量数据")
+        
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # 定义颜色
+    colors = ['#d62728', '#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b']
+    
+    # 绘图参数
+    level_width = 0.6  # 能级横线的宽度
+    gap = 0.4          # 步骤之间的间距
+    
+    # 遍历每条路径
+    for idx, col in enumerate(path_cols):
+        energies = df[col].values
+        color = colors[idx % len(colors)]
+        label = str(col).replace('_Energy', '').replace('_', ' ')
+        
+        # 记录连接线的坐标点
+        connector_x = []
+        connector_y = []
+        
+        for i, E in enumerate(energies):
+            # 处理 NaN 值，如果中间断开则不连线
+            if np.isnan(E): 
+                connector_x.append(None)
+                connector_y.append(None)
+                continue
+                
+            # 计算当前步骤的中心 X 坐标
+            center_x = i * (level_width + gap)
+            
+            # 绘制能级水平线
+            x_start = center_x - level_width / 2
+            x_end = center_x + level_width / 2
+            ax.plot([x_start, x_end], [E, E], color=color, linewidth=2.5, label=label if i == 0 else "")
+            
+            connector_x.append(center_x)
+            connector_y.append(E)
+            
+            # 标注数值
+            ax.text(center_x, E + (1.0 if E >= 0 else -1.5), f"{E:.1f}", ha='center', va='bottom', 
+                    fontsize=10, color=color, fontweight='bold', fontproperties=global_font)
+
+        # 平滑曲线连接
+        for i in range(len(connector_x) - 1):
+            if connector_x[i] is None or connector_x[i+1] is None:
+                continue
+                
+            x1 = connector_x[i] + level_width / 2
+            y1 = connector_y[i]
+            x2 = connector_x[i+1] - level_width / 2
+            y2 = connector_y[i+1]
+            
+            # 生成平滑曲线点 (余弦插值)
+            t = np.linspace(0, 1, 50)
+            x_smooth = x1 + (x2 - x1) * t
+            y_smooth = y1 + (y2 - y1) * (1 - np.cos(t * np.pi)) / 2
+            
+            ax.plot(x_smooth, y_smooth, color=color, linestyle='--', linewidth=1.2, alpha=0.6)
+            
+    # 设置 X 轴
+    ax.set_xticks([i * (level_width + gap) for i in range(n_steps)])
+    ax.set_xticklabels(steps, fontsize=12, fontweight='semibold', fontproperties=global_font)
+    
+    # 设置 Y 轴
+    ax.set_ylabel('相对吉布斯自由能 (kcal/mol)', fontsize=12, fontproperties=global_font)
+    
+    # 移除多余边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.legend(frameon=False, loc='best', prop=global_font)
+    ax.set_title('反应能级图 (Reaction Energy Profile)', fontsize=16, pad=15, fontproperties=global_font)
     
     plt.tight_layout()
     return fig
@@ -393,6 +915,180 @@ def draw_radar_chart(df):
     # 标题和图例
     ax.set_title("多靶标广谱活性评价", fontproperties=global_font, fontsize=20, pad=30)
     ax.legend(loc='upper right', bbox_to_anchor=(0.1, 1.1), prop=global_font, frameon=False)
+    
+    plt.tight_layout()
+    return fig
+
+# ==============================
+# 6. 反应条件筛选气泡图
+# ==============================
+def draw_optimization_bubble(df):
+    """
+    绘制反应条件筛选气泡图
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 4:
+        raise ValueError("数据列数不足，至少需要 4 列 (Catalyst, Solvent, Yield, ee)")
+
+    # 提取数据 (假设前4列顺序固定: Cat, Solv, Yield, ee)
+    # 或者通过列名模糊匹配
+    col_names = df.columns
+    x_col = col_names[0]
+    y_col = col_names[1]
+    size_col = col_names[2]
+    color_col = col_names[3]
+    
+    x_cat = df[x_col].astype(str)
+    y_solv = df[y_col].astype(str)
+    sizes = pd.to_numeric(df[size_col], errors='coerce').fillna(0)
+    colors = pd.to_numeric(df[color_col], errors='coerce').fillna(0)
+    
+    # 将分类变量映射为数值坐标
+    unique_x = sorted(list(set(x_cat)))
+    unique_y = sorted(list(set(y_solv)))
+    
+    x_map = {val: i for i, val in enumerate(unique_x)}
+    y_map = {val: i for i, val in enumerate(unique_y)}
+    
+    x_vals = x_cat.map(x_map)
+    y_vals = y_solv.map(y_map)
+
+    # 创建画布
+    fig, ax = plt.subplots(figsize=(11, 9))
+    
+    # 核心绘图
+    sc = ax.scatter(x_vals, y_vals, s=sizes*12, c=colors, 
+                    cmap='viridis', alpha=0.8, edgecolors='black', linewidth=1)
+    
+    # 标签与美化
+    ax.set_xticks(range(len(unique_x)))
+    ax.set_xticklabels(unique_x, fontsize=12, rotation=0, fontproperties=global_font)
+    
+    ax.set_yticks(range(len(unique_y)))
+    ax.set_yticklabels(unique_y, fontsize=12, fontproperties=global_font)
+    
+    ax.grid(True, linestyle='--', alpha=0.3)
+    ax.set_axisbelow(True)
+    
+    # 轴标签
+    ax.set_xlabel(x_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_ylabel(y_col, fontsize=14, fontweight='bold', labelpad=10, fontproperties=global_font)
+    ax.set_title('反应条件筛选结果 (Reaction Optimization)', fontsize=18, pad=20, fontproperties=global_font)
+    
+    # Colorbar
+    cbar = plt.colorbar(sc, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label(f'{color_col} (Color)', rotation=270, labelpad=20, fontsize=12, fontproperties=global_font)
+    
+    # Size Legend
+    legend_sizes = [20, 50, 80]
+    legend_labels = ['20%', '50%', '80%']
+    legend_handles = [plt.scatter([], [], s=s*12, c='gray', alpha=0.6, edgecolors='black') for s in legend_sizes]
+    
+    ax.legend(legend_handles, legend_labels, title=f"{size_col} (Size)", 
+              loc='upper left', bbox_to_anchor=(1.15, 1), frameon=False, labelspacing=1.5, prop=global_font)
+    
+    plt.tight_layout()
+    plt.subplots_adjust(right=0.85)
+    
+    return fig
+
+# ==============================
+# 7. 反应能级图
+# ==============================
+def draw_energy_profile(df):
+    """
+    绘制反应能级图 (Reaction Energy Profile)
+    """
+    global_font = configure_mpl_fonts()
+    
+    # 简单数据验证
+    if df.shape[1] < 2:
+        raise ValueError("数据列数不足，至少需要 2 列 (Step, Energy...)")
+    
+    # 提取步骤名称
+    steps = df.iloc[:, 0].astype(str).values
+    n_steps = len(steps)
+    
+    # 提取所有路径的数据列（除去第一列）
+    # 只选择数值类型的列作为能量列
+    path_cols = df.iloc[:, 1:].select_dtypes(include=[np.number]).columns
+    
+    if len(path_cols) == 0:
+        raise ValueError("未找到数值列作为能量数据")
+        
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # 定义颜色
+    colors = ['#d62728', '#1f77b4', '#2ca02c', '#ff7f0e', '#9467bd', '#8c564b']
+    
+    # 绘图参数
+    level_width = 0.6  # 能级横线的宽度
+    gap = 0.4          # 步骤之间的间距
+    
+    # 遍历每条路径
+    for idx, col in enumerate(path_cols):
+        energies = df[col].values
+        color = colors[idx % len(colors)]
+        label = str(col).replace('_Energy', '').replace('_', ' ')
+        
+        # 记录连接线的坐标点
+        connector_x = []
+        connector_y = []
+        
+        for i, E in enumerate(energies):
+            # 处理 NaN 值，如果中间断开则不连线
+            if np.isnan(E): 
+                connector_x.append(None)
+                connector_y.append(None)
+                continue
+                
+            # 计算当前步骤的中心 X 坐标
+            center_x = i * (level_width + gap)
+            
+            # 绘制能级水平线
+            x_start = center_x - level_width / 2
+            x_end = center_x + level_width / 2
+            ax.plot([x_start, x_end], [E, E], color=color, linewidth=2.5, label=label if i == 0 else "")
+            
+            connector_x.append(center_x)
+            connector_y.append(E)
+            
+            # 标注数值
+            ax.text(center_x, E + (1.0 if E >= 0 else -1.5), f"{E:.1f}", ha='center', va='bottom', 
+                    fontsize=10, color=color, fontweight='bold', fontproperties=global_font)
+
+        # 平滑曲线连接
+        for i in range(len(connector_x) - 1):
+            if connector_x[i] is None or connector_x[i+1] is None:
+                continue
+                
+            x1 = connector_x[i] + level_width / 2
+            y1 = connector_y[i]
+            x2 = connector_x[i+1] - level_width / 2
+            y2 = connector_y[i+1]
+            
+            # 生成平滑曲线点 (余弦插值)
+            t = np.linspace(0, 1, 50)
+            x_smooth = x1 + (x2 - x1) * t
+            y_smooth = y1 + (y2 - y1) * (1 - np.cos(t * np.pi)) / 2
+            
+            ax.plot(x_smooth, y_smooth, color=color, linestyle='--', linewidth=1.2, alpha=0.6)
+            
+    # 设置 X 轴
+    ax.set_xticks([i * (level_width + gap) for i in range(n_steps)])
+    ax.set_xticklabels(steps, fontsize=12, fontweight='semibold', fontproperties=global_font)
+    
+    # 设置 Y 轴
+    ax.set_ylabel('相对吉布斯自由能 (kcal/mol)', fontsize=12, fontproperties=global_font)
+    
+    # 移除多余边框
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    ax.legend(frameon=False, loc='best', prop=global_font)
+    ax.set_title('反应能级图 (Reaction Energy Profile)', fontsize=16, pad=15, fontproperties=global_font)
     
     plt.tight_layout()
     return fig

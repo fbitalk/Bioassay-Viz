@@ -72,6 +72,56 @@ def create_heatmap_data():
     return df
 
 # ==========================================
+# 4. 生成反应条件筛选数据 (适合气泡图)
+# ==========================================
+def create_optimization_data():
+    np.random.seed(888)
+    data = {
+        'Catalyst': [],
+        'Solvent': [],
+        'Yield': [],
+        'ee': []
+    }
+    
+    catalysts = ['Cat. A', 'Cat. B', 'Cat. C', 'Cat. D', 'Cat. E']
+    solvents = ['THF', 'DCM', 'Toluene', 'MeCN', 'DMF']
+    
+    for cat in catalysts:
+        for solv in solvents:
+            data['Catalyst'].append(cat)
+            data['Solvent'].append(solv)
+            
+            base_yield = np.random.randint(10, 60)
+            base_ee = np.random.randint(0, 50)
+            
+            if cat == 'Cat. C':
+                base_yield += 30
+                base_ee += 40
+            if solv == 'Toluene':
+                base_yield += 15
+                base_ee += 10
+                
+            final_yield = min(99, base_yield + np.random.randint(-5, 5))
+            final_ee = min(99, base_ee + np.random.randint(-5, 5))
+            
+            data['Yield'].append(max(0, final_yield))
+            data['ee'].append(max(0, final_ee))
+            
+    return pd.DataFrame(data)
+
+# ==========================================
+# 5. 生成反应能级数据 (适合能级图)
+# ==========================================
+def create_energy_profile_data():
+    # 模拟两条路径：有催化剂 vs 无催化剂
+    data = {
+        'Step': ['Reactant', 'TS1', 'Intermediate', 'TS2', 'Product'],
+        'Uncatalyzed_Energy': [0.0, 28.5, 15.2, 22.1, -8.5],
+        'Catalyzed_Energy': [0.0, 14.8, 6.5, 9.2, -8.5]
+    }
+    return pd.DataFrame(data)
+
+# ==========================================
 # 保存到 Excel
 # ==========================================
 if __name__ == "__main__":
@@ -86,6 +136,12 @@ if __name__ == "__main__":
         
         df3 = create_heatmap_data()
         df3.to_excel(writer, sheet_name='热图测试', index=False)
+
+        df4 = create_optimization_data()
+        df4.to_excel(writer, sheet_name='反应条件筛选', index=False)
+
+        df5 = create_energy_profile_data()
+        df5.to_excel(writer, sheet_name='反应能级数据', index=False)
         
     print(f"成功生成测试文件: {file_name}")
-    print("包含工作表: '除草&广谱测试', '除菌测试', '热图测试'")
+    print("包含工作表: '除草&广谱测试', '除菌测试', '热图测试', '反应条件筛选', '反应能级数据'")
