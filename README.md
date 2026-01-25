@@ -67,7 +67,7 @@ streamlit run app.py
 ### 3. 一键脚本
 已为Windows用户制作懒人一键脚本，从仓库下载本项目，解压后打开根目录，双击运行:
 ```bash
-run app.bat
+run_app.bat
 ```
 应用启动后，浏览器将自动打开 `http://localhost:8501`。
 
