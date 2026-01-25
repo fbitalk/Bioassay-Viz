@@ -10,22 +10,27 @@
 *   **用途**: 展示多样本在不同浓度下的活性分布。
 *   **特点**: 支持自动排序（罗马数字/数字）、长列表自动分割。
 *   **输出**: 高清热图，包含具体的活性数值。
+*   ![Heatmap Demo](assets/demo_heatmap.png)
 
 ### 2. 除草活性极坐标图 (Polar Bar)
 *   **用途**: 展示除草剂对多种作物的活性。
 *   **特点**: 独特的极坐标柱状图设计，美观且能直观展示选择性。
+*   ![Polar Bar Demo](assets/demo_polar.png)
 
 ### 3. 除菌活性柱状图 (Bar Chart)
 *   **用途**: 专门用于对比灰霉病和赤霉病的抑制活性。
 *   **特点**: 标准双柱对比图，清晰展示差异。
+*   ![Bar Chart Demo](assets/demo_bar.png)
 
 ### 4. 数据分布箱线图 (Boxplot)
 *   **用途**: 统计和展示一组数据的分布情况（中位数、四分位数）。
 *   **特点**: 叠加散点（Jitter），可同时看到分布趋势和原始数据点，便于发现异常值。
+*   ![Boxplot Demo](assets/demo_boxplot.png)
 
 ### 5. 广谱活性雷达图 (Radar Chart)
 *   **用途**: 综合评价一个化合物对多个靶标的广谱活性。
 *   **特点**: 多维雷达图，直观展示化合物的综合性能。
+*   ![Radar Chart Demo](assets/demo_radar.png)
 
 ### 6. 反应条件筛选气泡图 (Optimization Bubble Plot)
 *   **用途**: 可视化化学反应条件筛选结果。
@@ -33,10 +38,12 @@
     *   **X轴/Y轴**: 催化剂/溶剂等条件。
     *   **气泡大小**: 代表产率 (Yield)。
     *   **气泡颜色**: 代表对映选择性 (ee值)。
+*   ![Optimization Bubble Demo](assets/bubble_opt_反应条件筛选.png)
 
 ### 7. 反应能级图 (Reaction Energy Profile)
 *   **用途**: 展示 DFT 计算的化学反应路径能量变化。
 *   **特点**: 绘制标准的能级阶梯图，并用平滑曲线连接各步骤，支持多路径对比。
+*   ![Energy Profile Demo](assets/energy_profile_反应能级数据.png)
 
 ### 8. 反应动力学曲线 (Reaction Kinetics)
 *   **用途**: 监测反应产率随时间的变化，研究反应速率。
