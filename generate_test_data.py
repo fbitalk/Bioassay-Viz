@@ -122,6 +122,33 @@ def create_energy_profile_data():
     return pd.DataFrame(data)
 
 # ==========================================
+# 6. 生成动力学数据 (适合动力学曲线)
+# ==========================================
+def create_kinetics_data():
+    # 模拟不同条件下的反应进程
+    times = [0, 10, 30, 60, 120, 240, 480]  # 分钟
+    
+    # 模型：Yield = Max * (1 - exp(-k * t))
+    def kinetic_model(t, k, max_yield):
+        return max_yield * (1 - np.exp(-k * t))
+
+    data = {
+        'Time (min)': times,
+        'Condition A (Standard)': [kinetic_model(t, 0.02, 95) for t in times],
+        'Condition B (No Catalyst)': [kinetic_model(t, 0.002, 20) for t in times],
+        'Condition C (New Solvent)': [kinetic_model(t, 0.05, 98) for t in times],
+        'Condition D (Low Temp)': [kinetic_model(t, 0.008, 85) for t in times]
+    }
+    
+    # 添加一点随机噪声
+    df = pd.DataFrame(data)
+    for col in df.columns[1:]:
+        df[col] = df[col] + np.random.normal(0, 1, len(df))
+        df[col] = df[col].clip(0, 100)  # 限制在0-100之间
+        
+    return df
+
+# ==========================================
 # 保存到 Excel
 # ==========================================
 if __name__ == "__main__":
@@ -142,6 +169,9 @@ if __name__ == "__main__":
 
         df5 = create_energy_profile_data()
         df5.to_excel(writer, sheet_name='反应能级数据', index=False)
+
+        df6 = create_kinetics_data()
+        df6.to_excel(writer, sheet_name='反应动力学', index=False)
         
     print(f"成功生成测试文件: {file_name}")
-    print("包含工作表: '除草&广谱测试', '除菌测试', '热图测试', '反应条件筛选', '反应能级数据'")
+    print("包含工作表: '除草&广谱测试', '除菌测试', '热图测试', '反应条件筛选', '反应能级数据', '反应动力学'")
