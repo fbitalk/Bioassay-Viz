@@ -65,7 +65,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 ### 3. 一键脚本
-已为Windows用户制作懒人一键脚本，从仓库下载本项目，解压后打开根目录，双击运行:
+对于小白，作者也为Windows用户制作了懒人一键脚本，从仓库下载本项目，解压后打开根目录，双击运行:
 ```bash
 run_app.bat
 ```
@@ -80,6 +80,8 @@ run_app.bat
 *   **Frontend**: [Streamlit](https://streamlit.io/)
 *   **Data Processing**: [Pandas](https://pandas.pydata.org/), [NumPy](https://numpy.org/)
 *   **Visualization**: [Matplotlib](https://matplotlib.org/), [Seaborn](https://seaborn.pydata.org/)
+
+本项目完全开源免费，如果对你有帮助，请给一个简单的star。
 
 ## 📄 License
 MIT License
