@@ -64,9 +64,14 @@ pip install -r requirements.txt
 ```bash
 streamlit run app.py
 ```
+### 3. 一键脚本
+已为Windows用户制作懒人一键脚本，从仓库下载本项目，解压后打开根目录，双击运行:
+```bash
+run app.bat
+```
 应用启动后，浏览器将自动打开 `http://localhost:8501`。
 
-### 3. 数据准备
+### 4. 数据准备
 请准备 Excel 文件 (`.xlsx`)。不同图表对数据格式有特定要求，详见应用内的侧边栏说明。
 
 ---
