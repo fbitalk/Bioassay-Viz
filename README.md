@@ -53,19 +53,19 @@ un_app.bat** 脚本。它会自动检查依赖并在浏览器中启动应用。
 ### 方式二：手动安装运行
 
 1.  **克隆仓库**
-    `...
+    `
     git clone https://github.com/fbitalk/Bioassay-Viz.git
     cd Bioassay-Viz
     `
 
 2.  **安装依赖**
     确保已安装 Python (3.8+)，然后运行：
-    `...
+    `
     pip install -r requirements.txt
     `
 
 3.  **启动应用**
-    `...
+    `
     streamlit run app.py
     `
 
@@ -100,5 +100,6 @@ python generate_test_data.py
 
 ## 📄 License
 MIT License
+
 
 
