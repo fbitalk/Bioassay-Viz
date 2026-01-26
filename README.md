@@ -1,5 +1,9 @@
 # Bioassay & Chemistry Data Visualization Tool (生测与化学数据可视化工具)
 
+[![GitHub stars](https://img.shields.io/github/stars/fbitalk/Bioassay-Viz.svg?style=social&label=Star&maxAge=2592000)](https://github.com/fbitalk/Bioassay-Viz/stargazers)
+
+如果这个项目对您的科研工作有帮助，请点击右上角的 ⭐ **Star** 支持一下！您的支持是我持续更新的动力。
+
 这是一个基于 **Python Streamlit** 开发的 Web 可视化工具，专为生物测定（Bioassay）和有机合成（Organic Synthesis）领域的数据分析而设计。它能够将 Excel 数据快速转换为出版级（Publication-Ready）的高质量图表。
 
 ## 🌟 主要功能 (Features)
@@ -61,10 +65,14 @@ pip install -r requirements.txt
 ```
 
 ### 2. 运行应用
+
+**方式一：命令行运行**
 ```bash
 streamlit run app.py
 ```
-应用启动后，浏览器将自动打开 `http://localhost:8501`。
+
+**方式二：一键运行 (Windows)**
+直接双击项目根目录下的 `run_app.bat` 脚本即可启动。
 
 ### 3. 数据准备
 请准备 Excel 文件 (`.xlsx`)。不同图表对数据格式有特定要求，详见应用内的侧边栏说明。
