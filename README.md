@@ -2,7 +2,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/fbitalk/Bioassay-Viz.svg?style=social&label=Star&maxAge=2592000)](https://github.com/fbitalk/Bioassay-Viz/stargazers)
 
-如果这个项目对您的科研工作有帮助，请点击右上角的 ⭐ **Star** 支持一下！您的支持是我持续更新的动力。
+如果觉得这个项目对您的科研工作有帮助，请点击右上角的 ⭐ **Star** 支持一下！您的支持是我持续更新的动力。
 
 这是一个基于 **Python Streamlit** 开发的 Web 可视化工具，专为生物测定（Bioassay）和有机合成（Organic Synthesis）领域的数据分析而设计。它能够将 Excel 数据快速转换为出版级（Publication-Ready）的高质量图表。
 
