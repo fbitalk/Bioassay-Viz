@@ -73,6 +73,7 @@ streamlit run app.py
 应用启动后，浏览器将自动打开 `http://localhost:8501`。
 
 **方式二：一键运行 (Windows)**
+
 对于小白，作者也为Windows用户制作了懒人一键脚本，直接双击项目根目录下的 `run_app.bat` 脚本即可启动。
 
 ### 3. 数据准备
